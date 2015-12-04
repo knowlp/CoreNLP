@@ -80,6 +80,7 @@ public class CoNLL2011DocumentReader {
   public CoNLL2011DocumentReader(String filepath, Options options)
   {
 //    this.filepath = filepath;
+    logger.info("Searching for files with pattern '"+options.filePattern+"'");
     this.fileList = getFiles(filepath, options.filePattern);
     this.options = options;
     if (options.sortFiles) {
@@ -172,7 +173,7 @@ public class CoNLL2011DocumentReader {
     protected boolean sortFiles;
 
     public Options() {
-      this(".*_gold_conll$");      // _gold_conll or _auto_conll   or .conll
+      this(".*_auto_conll$");      // _gold_conll or _auto_conll   or .conll
     }
 
     public Options(String filter) {
