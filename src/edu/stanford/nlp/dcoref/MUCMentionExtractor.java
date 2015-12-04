@@ -65,7 +65,9 @@ public class MUCMentionExtractor extends MentionExtractor {
   public MUCMentionExtractor(Dictionaries dict, Properties props, Semantics semantics) throws Exception {
     super(dict, semantics);
     String fileName = props.getProperty(Constants.MUC_PROP);
+    System.err.printf("MUCMentionExtractor with file name '%s'", fileName);
     fileContents = IOUtils.slurpFile(fileName);
+    System.err.printf("MUCMentionExtractor got file length '%d'", fileContents.length());
     currentOffset = 0;
     tokenizerFactory = PTBTokenizer.factory(new CoreLabelTokenFactory(false), "");
     stanfordProcessor = loadStanfordProcessor(props);
@@ -112,6 +114,8 @@ public class MUCMentionExtractor extends MentionExtractor {
       String sentenceString = sentenceMatcher.group(2);
       List<CoreLabel> words = tokenizerFactory.getTokenizer(new StringReader(sentenceString)).tokenize();
 
+      System.err.printf("MUCMentionExtractor tokenized into %d words\n", words.size());
+
       // FIXING TOKENIZATION PROBLEMS
       for (int i = 0; i < words.size(); i++) {
         CoreLabel w = words.get(i);
@@ -130,6 +134,8 @@ public class MUCMentionExtractor extends MentionExtractor {
         }
       }
       // END FIXING TOKENIZATION PROBLEMS
+
+      System.err.printf("MUCMentionExtractor after fixing: %d words\n", words.size());
 
       List<CoreLabel> sentence = new ArrayList<CoreLabel>();
       // MUC accepts embedded coref mentions, so we need to keep a stack for the mentions currently open
@@ -227,6 +233,7 @@ public class MUCMentionExtractor extends MentionExtractor {
       allSentences.add(sentCoreMap);
       sentCoreMap.set(CoreAnnotations.TokensAnnotation.class, sentence);
     }
+    System.err.printf("MUCMentionExtractor found %d sentences\n", allSentences.size());
 
     // assign goldCorefClusterID
     Map<Integer, Mention> idMention = Generics.newHashMap();    // temporary use
