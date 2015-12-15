@@ -95,15 +95,24 @@ public class MUCMentionExtractor extends MentionExtractor {
     Annotation docAnno = new Annotation("");
 
     Pattern docPattern = Pattern.compile("<DOC>(.*?)</DOC>", Pattern.DOTALL+Pattern.CASE_INSENSITIVE);
-    Pattern sentencePattern = Pattern.compile("(<s>|<hl>|<dd>|<DATELINE>|<p>)(.*?)(</s>|</hl>|</dd>|</DATELINE>|<p>)", Pattern.DOTALL+Pattern.CASE_INSENSITIVE+Pattern.MULTILINE);
+    Pattern sentencePattern = Pattern.compile("(<s>|<hl>|<dd>|<DATELINE>|<p>)(.*?)(</s>|</hl>|</dd>|</DATELINE>|</p>)", Pattern.DOTALL+Pattern.CASE_INSENSITIVE); // +Pattern.MULTILINE
     Matcher docMatcher = docPattern.matcher(fileContents);
     if (! docMatcher.find(currentOffset)) {
       System.err.printf("MUCMentionExtractor nextDoc did not find match for currentoffset %d!\n", currentOffset);
       return null;
     }
 
-    currentOffset = docMatcher.end()-3; // TODO
+    currentOffset = docMatcher.end(); //-3; // TODO
     String doc = docMatcher.group(1);
+    //System.err.printf("doc string '%s'\n", doc);
+    // replace newlines by spaces because tokenizer will otherwise
+    // destroy <...> tags that go across lines
+    // (such tokens exist in the MUC6 corpus as distributed by LDC) 
+    //doc = doc.replace("\n"," ").replace("\r"," ");
+    // replace malformed escaped quotes by HTML entities so that tokenizer recognizes tags
+    // (such malformed tokens exist in the MUC6 corpus as distributed by LDC) 
+    doc = doc.replace("\\\"","&quot;");
+    //System.err.printf("doc string '%s'\n", doc);
     Matcher sentenceMatcher = sentencePattern.matcher(doc);
     String ner = null;
 
@@ -117,7 +126,8 @@ public class MUCMentionExtractor extends MentionExtractor {
       String sentenceString = sentenceMatcher.group(2);
       List<CoreLabel> words = tokenizerFactory.getTokenizer(new StringReader(sentenceString)).tokenize();
 
-      System.err.printf("MUCMentionExtractor tokenized into %d words\n", words.size());
+      //System.err.printf("sentenceString '%s'\n", sentenceString);
+      //System.err.printf("MUCMentionExtractor tokenized into %d words\n", words.size());
 
       // FIXING TOKENIZATION PROBLEMS
       for (int i = 0; i < words.size(); i++) {
@@ -138,7 +148,7 @@ public class MUCMentionExtractor extends MentionExtractor {
       }
       // END FIXING TOKENIZATION PROBLEMS
 
-      System.err.printf("MUCMentionExtractor after fixing: %d words\n", words.size());
+      //System.err.printf("MUCMentionExtractor after fixing: %d words\n", words.size());
 
       List<CoreLabel> sentence = new ArrayList<CoreLabel>();
       // MUC accepts embedded coref mentions, so we need to keep a stack for the mentions currently open
@@ -150,6 +160,7 @@ public class MUCMentionExtractor extends MentionExtractor {
 
       for (CoreLabel word : words) {
         String w = word.get(CoreAnnotations.TextAnnotation.class);
+        System.err.printf("processing word '%s'\n", w);
         // found regular token: WORD/POS
         if (!w.startsWith("<") && w.contains("\\/") && w.lastIndexOf("\\/") != w.length()-2) {
           int i = w.lastIndexOf("\\/");
@@ -236,17 +247,26 @@ public class MUCMentionExtractor extends MentionExtractor {
       allSentences.add(sentCoreMap);
       sentCoreMap.set(CoreAnnotations.TokensAnnotation.class, sentence);
     }
-    System.err.printf("MUCMentionExtractor found %d sentences\n", allSentences.size());
+    //System.err.printf("MUCMentionExtractor found %d sentences\n", allSentences.size());
 
     // assign goldCorefClusterID
     Map<Integer, Mention> idMention = Generics.newHashMap();    // temporary use
     for (List<Mention> goldMentions : allGoldMentions) {
       for (Mention m : goldMentions) {
+        //System.err.printf("idMention: %s -> origRef %s\n", m.mentionID, m.originalRef);
+        if (idMention.containsKey(m.mentionID) && !idMention.containsKey(m.originalRef)) {
+          // use reverse (some mentions in MUC6 are wrong (REF and ID is swapped))
+          Integer tmp = m.mentionID;
+          m.mentionID = m.originalRef;
+          m.originalRef = tmp;
+          //System.err.printf("fixed idMention: %s -> origRef %s\n", m.mentionID, m.originalRef);
+        }
         idMention.put(m.mentionID, m);
       }
     }
     for (List<Mention> goldMentions : allGoldMentions) {
       for (Mention m : goldMentions) {
+        //System.err.printf("Mention %s: goldCorefClusterID %s originalRef %s\n", m.mentionID, m.goldCorefClusterID, m.originalRef);
         if (m.goldCorefClusterID == -1) {
           if (m.originalRef == -1) m.goldCorefClusterID = m.mentionID;
           else {
