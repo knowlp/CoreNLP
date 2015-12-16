@@ -104,17 +104,15 @@ public class MUCMentionExtractor extends MentionExtractor {
 
     currentOffset = docMatcher.end();
     String doc = docMatcher.group(1);
-    if (doc.endsWith("<p>")) // in MUC7, <p> are not ended with </p>, just a new <p> starts
+    System.err.printf("doc string '%s'\n", doc);
+    // in MUC7 as distributed by LDC,
+    // <p> are not ended with </p>, just a new <p> starts
+    // we handle this here and in the regex above
+    if (doc.endsWith("<p>"))
       currentOffset -= 3;
-    //System.err.printf("doc string '%s'\n", doc);
-    // replace newlines by spaces because tokenizer will otherwise
-    // destroy <...> tags that go across lines
-    // (such tokens exist in the MUC6 corpus as distributed by LDC) 
-    //doc = doc.replace("\n"," ").replace("\r"," ");
     // replace malformed escaped quotes by HTML entities so that tokenizer recognizes tags
     // (such malformed tokens exist in the MUC6 corpus as distributed by LDC) 
     doc = doc.replace("\\\"","&quot;");
-    System.err.printf("doc string '%s'\n", doc);
     Matcher sentenceMatcher = sentencePattern.matcher(doc);
     String ner = null;
 
@@ -257,17 +255,16 @@ public class MUCMentionExtractor extends MentionExtractor {
       for (Mention m : goldMentions) {
         System.err.printf("idMention: %s -> origRef %s\n", m.mentionID, m.originalRef);
         if (idMention.containsKey(m.mentionID) && !idMention.containsKey(m.originalRef)) {
-          // use reverse (some mentions in MUC6 are wrong (REF and ID is swapped))
+          // use reverse (some annotations in MUC6 as distributed by LDC contain swapped IDs (REF and ID is swapped))
           Integer tmp = m.mentionID;
           m.mentionID = m.originalRef;
           m.originalRef = tmp;
-          System.err.printf("  reversed: %s -> origRef %s\n", m.mentionID, m.originalRef);
         }
         idMention.put(m.mentionID, m);
       }
     }
     // check if all originalRef pointers point to existing mentions
-    // (in MUC7 there are some that point to non-existing mentions, causing problems in dcoref)
+    // (in MUC7 as distributed by LDC there are some that point to non-existing mentions, causing problems in dcoref)
     for (List<Mention> goldMentions : allGoldMentions) {
       for (Mention m : goldMentions) {
         if (!idMention.containsKey(m.originalRef))
