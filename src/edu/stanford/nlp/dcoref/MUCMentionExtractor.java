@@ -95,7 +95,7 @@ public class MUCMentionExtractor extends MentionExtractor {
     Annotation docAnno = new Annotation("");
 
     Pattern docPattern = Pattern.compile("<DOC>(.*?)</DOC>", Pattern.DOTALL+Pattern.CASE_INSENSITIVE);
-    Pattern sentencePattern = Pattern.compile("(<s>|<hl>|<dd>|<DATELINE>|<p>)(.*?)(</s>|</hl>|</dd>|</DATELINE>|</p>|<p>)", Pattern.DOTALL+Pattern.CASE_INSENSITIVE); // +Pattern.MULTILINE
+    Pattern sentencePattern = Pattern.compile("(<s>|<hl>|<dd>|<DATELINE>|<p>)(.*?)(</s>|</hl>|</dd>|</DATELINE>|</p>|<p>)", Pattern.DOTALL+Pattern.CASE_INSENSITIVE);
     Matcher docMatcher = docPattern.matcher(fileContents);
     if (! docMatcher.find(currentOffset)) {
       System.err.printf("MUCMentionExtractor nextDoc did not find match for currentoffset %d!\n", currentOffset);
