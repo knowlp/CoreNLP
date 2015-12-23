@@ -165,6 +165,7 @@ public class RuleBasedCorefMentionFinder implements CorefMentionFinder {
       String nerString = w.get(CoreAnnotations.NamedEntityTagAnnotation.class);
       if(!nerString.equals(preNE)) {
         int endIndex = w.get(CoreAnnotations.IndexAnnotation.class) - 1;
+        //System.err.printf("extractNamedEntityMentions got ner %s preNE %s %d-%d '%s'\n", nerString, preNE, beginIndex, endIndex, w.get(CoreAnnotations.TextAnnotation.class));
         if(!preNE.matches("O|QUANTITY|CARDINAL|PERCENT|DATE|DURATION|TIME|SET")){
           if(w.get(CoreAnnotations.TextAnnotation.class).equals("'s")) endIndex++;
           IntPair mSpan = new IntPair(beginIndex, endIndex);
@@ -173,6 +174,10 @@ public class RuleBasedCorefMentionFinder implements CorefMentionFinder {
           // attached to the previous NER by the earlier heuristic
           if(beginIndex < endIndex && !mentionSpanSet.contains(mSpan)) {
             int dummyMentionId = -1;
+            //System.err.printf(" created mention %d-%d\n", beginIndex, endIndex);
+            //for(CoreLabel q : sent.subList(beginIndex, endIndex)) {
+            //  System.err.printf("  %s\n", q.get(CoreAnnotations.TextAnnotation.class));
+            //}
             Mention m = new Mention(dummyMentionId, beginIndex, endIndex, dependency, new ArrayList<CoreLabel>(sent.subList(beginIndex, endIndex)));
             mentions.add(m);
             mentionSpanSet.add(mSpan);
