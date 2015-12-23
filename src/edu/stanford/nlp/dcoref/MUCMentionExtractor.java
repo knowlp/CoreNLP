@@ -122,6 +122,8 @@ public class MUCMentionExtractor extends MentionExtractor {
       List<CoreLabel> words = tokenizerFactory.getTokenizer(new StringReader(sentenceString)).tokenize();
 
       System.err.printf("sentenceString '%s'\n", sentenceString);
+      //System.err.printf("whole match '%s'\n", sentenceMatcher.group(0));
+      //System.err.printf("match 3 '%s'\n", sentenceMatcher.group(3));
       System.err.printf("MUCMentionExtractor tokenized into %d words\n", words.size());
 
       // FIXING TOKENIZATION PROBLEMS
